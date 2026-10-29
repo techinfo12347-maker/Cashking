@@ -1,1 +1,44 @@
 
+name: Build Cashking APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'app.zip'
+      - '.github/workflows/main.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install unzip
+        run: sudo apt-get update && sudo apt-get install -y unzip
+
+      - name: Extract app
+        run: |
+          unzip -o app.zip -d app-source
+          find app-source -maxdepth 4 -name gradlew
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Build APK
+        run: |
+          cd app-source
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Cashking-APK
+          path: app-source/**/build/outputs/apk/**/*.apk
+          if-no-files-found: error
+          
